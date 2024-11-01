@@ -5,15 +5,18 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "build:watch": "tsc --watch",
     "start": "jest",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "author": "Martin Adamek",
   "license": "MIT",
   "dependencies": {
     "@mikro-orm/core": "next",
     "@mikro-orm/sqlite": "next",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "uuid": "^11.0.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
