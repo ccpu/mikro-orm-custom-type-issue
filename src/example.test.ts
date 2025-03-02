@@ -1,6 +1,5 @@
 import { Entity, MikroORM, PrimaryKey, Property } from "@mikro-orm/sqlite";
 import { Type } from "@mikro-orm/core";
-import { parse as uuidParse, stringify as uuidStringify } from "uuid";
 
 export class JsonStringType extends Type<any, string> {
   convertToDatabaseValue(value: any): string {
@@ -25,7 +24,10 @@ export class JsonStringType extends Type<any, string> {
 
 @Entity()
 class User {
-  @PrimaryKey({
+  @PrimaryKey()
+  id!: number;
+
+  @Property({
     type: JsonStringType,
   })
   json!: object;
@@ -51,12 +53,14 @@ test("basic CRUD example", async () => {
   const em = orm.em.fork();
 
   em.create(User, {
-    json: { foo: 1 },
+    json: { foo: 1, id: 1 },
   });
 
   await em.flush();
 
+  await em.clear();
+
   const result = await em.findAll(User);
 
-  expect(result).toBe([{ foo: 1 }]);
+  expect(result).toBe([{ foo: 1, id: 1 }]);
 });
