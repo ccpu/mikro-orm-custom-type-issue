@@ -2,38 +2,33 @@ import { Entity, MikroORM, PrimaryKey, Property } from "@mikro-orm/sqlite";
 import { Type } from "@mikro-orm/core";
 import { parse as uuidParse, stringify as uuidStringify } from "uuid";
 
-export class UuidBinaryType extends Type<string, Buffer> {
-  convertToDatabaseValue(value: string): Buffer {
-    // if (typeof value !== "string") return value;
-    return Buffer.from(uuidParse(value) as any);
+export class JsonStringType extends Type<any, string> {
+  convertToDatabaseValue(value: any): string {
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    return JSON.stringify(value);
   }
 
-  convertToJSValue(value: Buffer): string {
-    return uuidStringify(value as any);
+  convertToJsValue(value: string): any {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    return JSON.parse(value);
   }
 
   getColumnType(): string {
-    return "binary(16)";
+    return "text";
   }
 }
 
 @Entity()
 class User {
   @PrimaryKey({
-    type: UuidBinaryType,
+    type: JsonStringType,
   })
-  id!: string;
-
-  @Property()
-  name: string;
-
-  @Property({ unique: true })
-  email: string;
-
-  constructor(name: string, email: string) {
-    this.name = name;
-    this.email = email;
-  }
+  json!: object;
 }
 
 let orm: MikroORM;
@@ -53,18 +48,15 @@ afterAll(async () => {
 });
 
 test("basic CRUD example", async () => {
-  const uuid = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+  const em = orm.em.fork();
 
-  orm.em.create(User, {
-    name: "Foo",
-    email: "foo",
-    id: uuid,
+  em.create(User, {
+    json: { foo: 1 },
   });
-  await orm.em.flush();
-  orm.em.clear();
 
-  await orm.em.nativeUpdate("User", { id: uuid }, { name: "bar" });
+  await em.flush();
 
-  const count = await orm.em.count(User, { name: "bar" });
-  expect(count).toBe(1);
+  const result = await em.findAll(User);
+
+  expect(result).toBe([{ foo: 1 }]);
 });
